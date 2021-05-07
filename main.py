@@ -492,6 +492,28 @@ def compare_approx_and_empirical_pmf():
     plt.savefig('1d_figures/%s_.png' % name)
 
 
+def pmf_approx_error_vs_L():
+    L_range = np.asarray([3,11,21,51])
+    R = 10
+    sigma = 3
+    error = np.zeros((len(L_range),R))
+    n = 0
+    N = 100000
+    for L in L_range:
+        for r in range(R):
+            x = np.random.randn(L, 1)
+            pmf = pmf_approx_tm_1d(x, sigma)
+            empirical_pmf = pmf_empirical_tm_1d(x, sigma, N)
+            error[n,r] = np.mean((pmf - empirical_pmf)**2)
+        n += 1
+    plt.plot(L_range,np.mean(error,axis=-1),'-+')
+    plt.xlabel('L')
+    plt.ylabel('Mean Squared Error')
+    name = 'pmf_approx_err_vs_L_sigma_%f_N_%d' % (sigma, N)
+    plt.savefig('1d_figures/%s.eps' % name)
+    plt.savefig('1d_figures/%s_.png' % name)
+
+
 def main():
     # Figure 1: Image formation. This function plots to a local file a figure containing a clean particle projection,
     #           a rotated projection and a noisy projection.
@@ -530,7 +552,10 @@ def main():
     #compare_prior_weights()
 
     # Figure 12: Comparison of pmf approximation and empirical pmf for 1d tm using the signal as a refernece
-    compare_approx_and_empirical_pmf()
+    #compare_approx_and_empirical_pmf()
+
+    # Figure 13: PMF Approximation error vs L
+    pmf_approx_error_vs_L()
     
 if __name__ == '__main__':
     main()
