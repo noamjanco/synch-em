@@ -22,7 +22,7 @@ from experiments import standard_em_experiment_1d, tm_em_experiment, ppm_synch_e
 from common_functions import recover_image
 from make_data import make_data, make_data_1d
 from synchronization import synchronize_1d, synchronize_and_match_1d
-from learn_distribution_of_rotations import learn_prior, run_training_experiments
+from learn_distribution_of_rotations import learn_prior, run_training_experiments, pmf_approx_tm_1d, pmf_empirical_tm_1d
 import hashlib
 
 
@@ -473,6 +473,25 @@ def compare_prior_weights():
 
     save_plot_gamma(paths, labels)
 
+
+def compare_approx_and_empirical_pmf():
+    L = 21
+    sigma = 3
+    x = np.random.randn(L, 1)
+    pmf = pmf_approx_tm_1d(x,sigma)
+    plt.plot(pmf,'-')
+    # empirical distribution
+    N = 10000
+    empirical_pmf = pmf_empirical_tm_1d(x, sigma, N)
+    plt.plot(empirical_pmf,'+')
+    plt.legend(['Approximated PMF', 'Empirical PMF'])
+    plt.xlabel('Estimated shift')
+    plt.ylabel('Probability')
+    name = 'pmf_approx_vs_empirical_L_%d_sigma_%f_N_%d'%(L,sigma,N)
+    plt.savefig('1d_figures/%s.eps' % name)
+    plt.savefig('1d_figures/%s_.png' % name)
+
+
 def main():
     # Figure 1: Image formation. This function plots to a local file a figure containing a clean particle projection,
     #           a rotated projection and a noisy projection.
@@ -508,7 +527,10 @@ def main():
     #compare_methods(Ncopy=5000, SNR_range=2.**(-np.arange(2.5,5.5,0.5)), use_signal_prior=True, use_sPCA=True, Ndir=360, BW=36, P=100, gamma=100)
 
     # Figure 11: Compare prior weights
-    compare_prior_weights()
+    #compare_prior_weights()
+
+    # Figure 12: Comparison of pmf approximation and empirical pmf for 1d tm using the signal as a refernece
+    compare_approx_and_empirical_pmf()
     
 if __name__ == '__main__':
     main()
