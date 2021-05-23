@@ -45,8 +45,9 @@ def EM_General_Prior(Coeff, Freqs, sigma, Ndir, rho_p, BW, gamma, Coeff_raw, use
 
         # dis = im_dist(x_new, x, Freqs)
         # dis = 1
+        
         dis = im_dist2(x_new, x, Freqs)
-
+        #dis = im_dist(x_new, x, Freqs)
         # print('%f' % (time() - TT))
 
         if dis < tol:
@@ -97,14 +98,14 @@ def EM_Prior(x, rho, data, sigma, R, BW, rho_p, gamma, Freqs, WhiteningMatrix, u
     return np.asarray(fftx_new,dtype=np.complex128), np.asarray(rho_new,dtype=np.complex128)
 
 def im_dist(x,y,Freqs):
-    ydd = np.ones((3600,))*np.sum(np.conj(y) * y)
+    Ndir = 3600
+    ydd = np.ones((Ndir,))*np.real(np.sum(np.conj(y) * y))
     zz = x
-    zze = (zz @ np.ones((1,3600))) * np.exp(1j*Freqs*2*np.pi/3600*np.arange(3600))
-    DIS = np.sum(np.conj(zze) * zze,axis=0) + ydd - 2*np.real(np.transpose(np.conj(zze)) @ y)
-    Dis = np.min(np.real(DIS))
-    if Dis < 0:
-        Dis = 0
-    return np.sqrt(Dis)
+    zze = (zz @ np.ones((1,Ndir))) * np.exp(1j*Freqs*2*np.pi/Ndir*np.arange(Ndir))
+    DIS = np.sum(np.real(np.conj(zze) * zze),axis=0) + ydd + - 2*np.real(np.transpose(np.conj(zze)) @ y[:,0])
+    Dis = np.min(DIS)
+    return np.sqrt(np.max([0,Dis]))
+
 
 def im_dist2(x,y,Freqs):
     return np.sqrt(np.sum(np.abs(x-y)**2))

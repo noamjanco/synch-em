@@ -121,6 +121,58 @@ def save_relerr_numiter_time_plot(paths, labels):
     plt.clf()
 
 
+def save_relerr_numiter_time_plot2(paths, labels):
+    markers = ['o','^','+','s']
+    ind = 0
+    for path, label in zip(paths,labels):
+        filename_list = [path + f for f in listdir(path) if isfile(join(path, f))]
+        results = pd.concat([pd.read_pickle(filename) for filename in filename_list])
+        snr_range = np.sort(results.SNR.unique())
+        mean_err = np.zeros_like(snr_range)
+        mean_num_iter = np.zeros_like(snr_range)
+        mean_t = np.zeros_like(snr_range)
+
+        for i,SNR in enumerate(snr_range):
+            if ind == 0:
+                mean_err[i] = np.nanmean(results[results.SNR == SNR].err_synch)
+                mean_t[i] = np.nanmean(results[results.SNR == SNR].t_synch)
+            else:
+                mean_err[i] = np.nanmean(results[results.SNR == SNR].err)
+                mean_t[i] = np.nanmean(results[results.SNR == SNR].t)
+            mean_num_iter[i] = np.nanmean(results[results.SNR == SNR].num_iter)
+
+        plt.subplot(311)
+        plt.loglog(snr_range, mean_err,'-'+markers[ind],label=label)
+        plt.ylabel('Error')
+        plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
+           ncol=len(labels), mode="expand", borderaxespad=0.)
+        #plt.legend()
+
+        plt.subplot(312)
+        if ind != 0:
+           plt.semilogx(snr_range, mean_num_iter,'-'+markers[ind],label=label)
+        else:
+           plt.semilogx([], [])
+        # plt.semilogx(snr_range, mean_num_iter,'-'+markers[ind],label=label)
+        plt.ylabel('# Iterations')
+        #plt.legend()
+
+        plt.subplot(313)
+        plt.semilogx(snr_range, mean_t,'-'+markers[ind],label=label)
+        plt.xlabel('SNR')
+        plt.ylabel('Run time [sec]')
+        #plt.legend()
+        ind += 1
+    name = ''
+    for label in labels:
+        name += label + '_'
+    name += 'N_%d_sPca_%d'%(results.iloc[0].N,results.iloc[0].use_sPCA)
+    name = name.replace(' ','_')
+    plt.savefig('2d_figures/%s_.png'%name,bbox_inches = "tight")
+    plt.savefig('2d_figures/%s.eps'%name,bbox_inches = "tight")
+
+    plt.clf()
+
 def save_plot_gamma(paths, labels):
     markers = ['o','^','+','s']
     ind = 0

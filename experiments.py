@@ -153,6 +153,12 @@ def synch_em_experiment(seed, image_idx, SNR, Ncopy, Ndir, use_sPCA, use_signal_
     Coeff_s, est_rotations = synchronize_and_match_2d(Coeff, Freqs, P=P, L=Ndir)
     t_synch = time() - TT
 
+    x_s = np.expand_dims(np.mean(Coeff_s, axis=-1), axis=-1)
+    x = align_image(x_s, Coeff_raw, Freqs)
+    imager = recover_image(x, Phi_ns, Freqs, r_max, Mean)
+    err_synch = np.sqrt(
+        np.sum(np.sum((image0 - imager) ** 2, axis=-1), axis=0) / np.sum(np.sum(image0 ** 2, axis=-1), axis=0))
+
 
 
     x, num_iter_synch_em, t_synch_em = EM_General_Prior(Coeff_s, Freqs, sigma, Ndir, rho_prior, BW, gamma, Coeff_raw, use_signal_prior)
@@ -174,7 +180,10 @@ def synch_em_experiment(seed, image_idx, SNR, Ncopy, Ndir, use_sPCA, use_signal_
                               'num_iter': num_iter_synch_em,
                               'BW': BW,
                               'gamma': gamma,
-                              't': t_synch+t_synch_em},
+                              't': t_synch+t_synch_em,
+                              't_synch': t_synch,
+                              't_em': t_synch_em,
+                              'err_synch': err_synch},
                              ignore_index=True)
 
     return results

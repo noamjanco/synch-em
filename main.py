@@ -15,7 +15,7 @@ from os.path import isfile, join
 from datetime import datetime
 from scipy import stats
 
-from plotting import save_relerr_plot,save_relerr_plot_1d,save_relerr_numiter_time_plot, save_plot_gamma
+from plotting import save_relerr_plot,save_relerr_plot_1d,save_relerr_numiter_time_plot, save_plot_gamma, save_relerr_numiter_time_plot2
 
 from experiments import tm_experiment, standard_em_experiment, known_rotations_experiment, synchronize_and_match_experiment, synch_em_experiment
 from experiments import standard_em_experiment_1d, tm_em_experiment, ppm_synch_em_experiment
@@ -418,12 +418,18 @@ def compare_methods(Ncopy, SNR_range, use_signal_prior, use_sPCA, Ndir, BW, P, g
     labels = []
 
     # Synchronize and Match
-    path_synchronize_and_math = run_in_parallel(synchronize_and_match_experiment, n_jobs, seed_range, SNR_range,
-                              'split_synch_N_%d_sPca_%d_M_%d'%(Ncopy,use_sPCA,P),
-                              Ncopy, Ndir, use_sPCA, P)
-    paths.append(path_synchronize_and_math)
-    labels.append('Synchronize and Match')
+    #path_synchronize_and_math = run_in_parallel(synchronize_and_match_experiment, n_jobs, seed_range, SNR_range,
+    #                          'split_synch_N_%d_sPca_%d_M_%d'%(Ncopy,use_sPCA,P),
+     #                         Ncopy, Ndir, use_sPCA, P)
+    #paths.append(path_synchronize_and_math)
+    #labels.append('Synchronize and Match')
+    # Synch-EM
+    path_synch_em = run_in_parallel(synch_em_experiment, n_jobs, seed_range, SNR_range,
+                              'synch_em_N_%d_sPca_%d_use_signal_prior_%d_gamma_%f_BW_%d_M_%d'%(Ncopy,use_sPCA, use_signal_prior, gamma, BW, P),
+                              Ncopy, Ndir, use_sPCA, use_signal_prior, gamma, BW, path_learning, P)
 
+    paths.append(path_synch_em)
+    labels.append('Synchronize and Match')
     # Standard EM on uniform data
     path_em = run_in_parallel(standard_em_experiment, n_jobs, seed_range, SNR_range,
                               'em_N_%d_sPca_%d_use_signal_prior_%d' % (Ncopy, use_sPCA, use_signal_prior),
@@ -431,15 +437,10 @@ def compare_methods(Ncopy, SNR_range, use_signal_prior, use_sPCA, Ndir, BW, P, g
     paths.append(path_em)
     labels.append('EM')
 
-    # Synch-EM
-    path_synch_em = run_in_parallel(synch_em_experiment, n_jobs, seed_range, SNR_range,
-                              'synch_em_N_%d_sPca_%d_use_signal_prior_%d_gamma_%f_BW_%d_M_%d'%(Ncopy,use_sPCA, use_signal_prior, gamma, BW, P),
-                              Ncopy, Ndir, use_sPCA, use_signal_prior, gamma, BW, path_learning, P)
-
     paths.append(path_synch_em)
     labels.append('Synch-EM')
 
-    save_relerr_numiter_time_plot(paths, labels)
+    save_relerr_numiter_time_plot2(paths, labels)
 
 
 def compare_prior_weights():
@@ -543,10 +544,10 @@ def main():
     #compare_methods(Ncopy=10000, SNR_range = 2.**(-np.arange(10)), use_signal_prior=False, use_sPCA=True, Ndir=360, BW=36, P=100, gamma=100)
 
     # Figure 9: Performance comparison, N=1000 with signal prior
-    #compare_methods(Ncopy=1000, SNR_range=2.**(-np.arange(2.5,5.5,0.5)), use_signal_prior=True, use_sPCA=True, Ndir=360, BW=36, P=100, gamma=100)
+    compare_methods(Ncopy=1000, SNR_range=2.**(-np.arange(2.5,5.5,0.5)), use_signal_prior=True, use_sPCA=True, Ndir=360, BW=36, P=100, gamma=100)
 
     # Figure 10: Performance comparison, N=5000 with signal prior
-    #compare_methods(Ncopy=5000, SNR_range=2.**(-np.arange(2.5,5.5,0.5)), use_signal_prior=True, use_sPCA=True, Ndir=360, BW=36, P=100, gamma=100)
+    compare_methods(Ncopy=5000, SNR_range=2.**(-np.arange(2.5,5.5,0.5)), use_signal_prior=True, use_sPCA=True, Ndir=360, BW=36, P=100, gamma=100)
 
     # Figure 11: Compare prior weights
     #compare_prior_weights()
@@ -555,7 +556,7 @@ def main():
     #compare_approx_and_empirical_pmf()
 
     # Figure 13: PMF Approximation error vs L
-    pmf_approx_error_vs_L()
+    #pmf_approx_error_vs_L()
     
 if __name__ == '__main__':
     main()
