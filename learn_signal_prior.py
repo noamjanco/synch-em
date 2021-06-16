@@ -12,7 +12,7 @@ def learn_signal_prior():
     r_max = 64
     Freqs_t = np.zeros((0,))
     Coeff_raw_t = np.zeros((0,1))
-    for image_idx in range(5):
+    for image_idx in range(20):
         Coeff, Freqs, rad_freqs, Mean, Phi_ns, sigma, Coeff_raw, rotations = make_data(Ncopy=Ncopy,SNR=SNR,seed=seed,image_idx=image_idx, sPCA=use_sPCA)
         Freqs_t = np.concatenate([Freqs_t, Freqs],axis=0)
         Coeff_raw_t = np.concatenate([Coeff_raw_t, Coeff_raw],axis=0)

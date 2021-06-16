@@ -154,7 +154,7 @@ def em_1d(X, sigma, num_iter, tol, x_init, b=None, rho_prior=None, uniform=False
                 fftx_new, rho_new = EM_iteration(fftx, rho, fftX, sqnormX, sigma, WhiteningMatrix)
             else:
                 fftx_new, rho_new = EM_iteration_Prior(fftx, rho, fftX, sqnormX, sigma, rho_prior[0], rho_prior[1], WhiteningMatrix)
-
+                #fftx_new, rho_new = EM_RSS_iterations(fftx, rho, fftX, sqnormX, sigma, BW, rho_prior[0], rho_prior[1], WhiteningMatrix)
         if relative_error_1d(np.fft.ifft(fftx,axis=0),np.fft.ifft(fftx_new,axis=0)) < tol:
             break
         fftx = fftx_new
@@ -218,5 +218,43 @@ def EM_iteration_Prior(fftx, rho, fftX, sqnormX, sigma,q,gamma, WhiteningMatrix=
 
     I = np.argmax(np.fft.ifft(np.fft.fft(np.mean(W, axis=1).T,axis=0) * np.conj(np.fft.fft(q,axis=0)).T,axis=0))
     q = np.roll(q, I)
+    rho_new = np.expand_dims((np.mean(W,axis=1)+gamma*q)/np.sum(np.mean(W,axis=1)+gamma*q),axis=-1)
+    return fftx_new, rho_new
+
+
+def EM_RSS_iterations(fftx, rho, fftX, sqnormX, sigma, BW, q, gamma, WhiteningMatrix=None):
+    L, N = fftX.shape
+    I = np.argmax(q)
+    q = np.roll(q,-(I-int(L/2)))
+    q = q[int(L/2)-int(BW/2):int(L/2)+int(np.ceil(BW/2))]
+    q = q[::-1]
+    R = L   # Rotation resolution in 1-d corresponds to a shift by one
+    Rot = np.expand_dims(np.exp(-1j*2*np.pi/R*np.arange(L)),axis=-1)
+    xtmp = fftx * np.expand_dims(np.exp(1j*2*np.pi/R*(np.arange(L))*int(np.floor(BW/2))),axis=-1)
+    T = np.zeros((BW,N))
+    for k in range(BW):
+        T[k,:] = - np.sum((np.abs(xtmp-fftX)**2),axis=0)
+        xtmp = xtmp * Rot
+
+    T = T / 2/(sigma ** 2)/L
+    T = T - np.max(T, axis=0)
+    W = np.exp(T)
+    W = W * rho
+    W = W / np.sum(W, axis=0)
+    if WhiteningMatrix is None:
+        Rl = np.exp(
+            -1j * 2 * np.pi / R * np.expand_dims(np.arange(L), axis=-1) * np.expand_dims(np.arange(int(np.floor(BW/2)),-int(np.ceil(BW/2)),-1), axis=-1).T)
+        fftx_new = np.expand_dims(np.sum(Rl * (fftX @ W.T), axis=1) / (N),axis=-1)
+
+    else:
+        Rl = np.exp(-1j * 2 * np.pi / R * np.expand_dims(np.arange(L), axis=-1) *
+                    np.expand_dims(np.arange(int(np.floor(BW / 2)), -int(np.ceil(BW / 2)), -1), axis=-1).T)
+        fftx_new = np.expand_dims(WhiteningMatrix @ np.sum(Rl * (fftX @ W.T), axis=1), axis=-1)
+
+    if gamma != 0:
+        I = int(np.floor(BW/2)) - np.argmax(np.mean(W, axis=1)) -1
+        W = np.roll(W, -I, axis=0)
+        fftx_new = fftx_new * np.expand_dims(np.exp(1j*2*np.pi/R*(np.arange(L))*I),axis=-1)
+
     rho_new = np.expand_dims((np.mean(W,axis=1)+gamma*q)/np.sum(np.mean(W,axis=1)+gamma*q),axis=-1)
     return fftx_new, rho_new

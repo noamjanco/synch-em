@@ -187,7 +187,7 @@ def sPCA_Basis(Phi_ns, ang_freqs, rad_freqs, coeff, data, r_max):
 
 
 def make_data(Ncopy, SNR, seed, image_idx, sPCA):
-    #TODO: Add caching
+    use_caching = False
     if not os.path.exists('make_data_cache/'):
         os.mkdir('make_data_cache/')
     label = 'make_data_output_Ncopy_%d_SNR_%f_seed_%d_image_idx_%d_sPCA_%d.pickle'%(Ncopy, SNR, seed, image_idx, sPCA)
@@ -232,8 +232,9 @@ def make_data(Ncopy, SNR, seed, image_idx, sPCA):
                                                                                                                    :num_coeffs], coeff_raw[
                                                                                                                                  :num_coeffs]
         # save results to cache file
-        with open(cache_file,'wb') as file:
-            pickle.dump((coeff, ang_freqs, rad_freqs, Mean, Phi_ns, sigma, coeff_raw, rotations),file)
+        if use_caching:
+            with open(cache_file,'wb') as file:
+                pickle.dump((coeff, ang_freqs, rad_freqs, Mean, Phi_ns, sigma, coeff_raw, rotations),file)
     else:
         # Load make data results from cached output
         with open(cache_file,'rb') as file:
@@ -269,7 +270,7 @@ def generate_signal(L=21, b=0):
         Sigma = generate_signal_covariance(L,b)
         x =  np.random.multivariate_normal(np.zeros((L,)),Sigma)
         x = x - np.mean(x)
-        x = x / np.sqrt(np.sum(x ** 2))
+        x = x / np.sqrt(np.sum(x ** 2)) * np.sqrt(L)
         return x
 
 

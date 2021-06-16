@@ -72,6 +72,51 @@ def save_relerr_plot_1d(paths, labels):
 
     plt.clf()
 
+
+def save_relerr_num_iter_plot_1d(paths, labels):
+    for path, label in zip(paths,labels):
+        filename_list = [path + f for f in listdir(path) if isfile(join(path, f))]
+        results = pd.concat([pd.read_pickle(filename) for filename in filename_list])
+        sigma_range = np.sort(results.sigma.unique())
+        L = results.iloc[0].L
+        snr_range = 1 / (sigma_range ** 2)
+        mean_err = np.zeros_like(snr_range)
+        mean_num_iter = np.zeros_like(snr_range)
+        mean_t = np.zeros_like(snr_range)
+
+
+        for i,sigma in enumerate(sigma_range):
+            mean_err[i] = np.nanmean(results[results.sigma == sigma].err)
+            mean_num_iter[i] = np.nanmean(results[results.sigma == sigma].num_iter)
+            mean_t[i] = np.nanmean(results[results.sigma == sigma].t)
+
+        plt.subplot(311)
+        plt.loglog(snr_range, mean_err,'-+',label=label)
+        plt.ylabel('Error')
+        plt.xlabel('SNR')
+        plt.subplot(312)
+        plt.semilogx(snr_range, mean_num_iter,'-+',label=label)
+        plt.ylabel('# Iterations')
+        plt.xlabel('SNR')
+        plt.subplot(313)
+        plt.semilogx(snr_range, mean_t,'-+',label=label)
+        plt.ylabel('Runtime [sec]')
+        plt.xlabel('SNR')
+        plt.legend()
+
+    name = ''
+    for label in labels:
+        name += label + '_'
+    name += 'relerr_L_%d_b_%d_N_%d'%(results.iloc[0].L,results.iloc[0].b,results.iloc[0].N)
+    name = name.replace(' ','_')
+    if not os.path.exists('1d_figures/'):
+        os.mkdir('1d_figures/')
+    plt.savefig('1d_figures/%s.png'%name)
+    plt.savefig('1d_figures/%s.eps'%name)
+
+    plt.clf()
+
+
 def save_relerr_numiter_time_plot(paths, labels):
     markers = ['o','^','+','s']
     ind = 0
